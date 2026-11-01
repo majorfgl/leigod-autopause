@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'signing-key.ps1')
 if (-not $Destination) { $Destination = Join-Path ([Environment]::GetFolderPath('MyDocuments')) ('LeigodAutoPause-Backups/release-key-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.p8') }
 if ($Console) {
-    $first = Read-Host 'Backup password (at least 16 characters; keep it separately)' -AsSecureString
+    $first = Read-Host 'Backup password (keep it separately)' -AsSecureString
     $second = Read-Host 'Repeat password' -AsSecureString
     $password = [Net.NetworkCredential]::new('', $first).Password
     try {
@@ -16,7 +16,7 @@ if ($Console) {
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing
 $form = [Windows.Forms.Form]::new(); $form.Text = '发布签名密钥 · 加密备份'; $form.ClientSize = [Drawing.Size]::new(660,330); $form.StartPosition = 'CenterScreen'; $form.FormBorderStyle = 'FixedDialog'; $form.MaximizeBox = $false
 $form.Font = [Drawing.Font]::new('Microsoft YaHei UI',10)
-$description = [Windows.Forms.Label]::new(); $description.SetBounds(20,15,620,62); $description.Text = "请设置至少 16 个字符的独立备份密码。密码不会发送到聊天或服务器。`n备份可在新电脑恢复；请把密码与备份文件分开保存。"; $form.Controls.Add($description)
+$description = [Windows.Forms.Label]::new(); $description.SetBounds(20,15,620,62); $description.Text = "请设置备份密码，长度由你决定。密码不会发送到聊天或服务器。`n请把密码与备份文件分开保存。"; $form.Controls.Add($description)
 $pathLabel = [Windows.Forms.Label]::new(); $pathLabel.SetBounds(20,86,110,25); $pathLabel.Text = '备份文件'; $form.Controls.Add($pathLabel)
 $pathBox = [Windows.Forms.TextBox]::new(); $pathBox.SetBounds(130,82,500,30); $pathBox.Text = $Destination; $form.Controls.Add($pathBox)
 $passwordLabel = [Windows.Forms.Label]::new(); $passwordLabel.SetBounds(20,130,110,25); $passwordLabel.Text = '备份密码'; $form.Controls.Add($passwordLabel)

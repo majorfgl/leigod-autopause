@@ -21,6 +21,10 @@ try {
     }
     Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'plugin') -Filter '*.cjs' -File | Copy-Item -Destination (Join-Path $stage 'plugin')
     foreach ($name in @('LICENSE.txt','README.md','使用说明.txt')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $stage }
+    [IO.Directory]::CreateDirectory((Join-Path $stage 'docs')) | Out-Null
+    Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'docs') -File -Filter '*.md' | Copy-Item -Destination (Join-Path $stage 'docs')
+    $userReadme = [IO.File]::ReadAllText((Join-Path $stage 'README.md')).Replace('(docs/maintainers/README.md)','(source/docs/maintainers/README.md)')
+    [IO.File]::WriteAllText((Join-Path $stage 'README.md'),$userReadme,[Text.UTF8Encoding]::new($false))
     [IO.File]::WriteAllText((Join-Path $stage 'release.config.json'), ($settings | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
     $source = Join-Path $stage 'source'; [IO.Directory]::CreateDirectory($source) | Out-Null
     foreach ($folder in @('plugin','launcher','tests','scripts','docs','.github')) {

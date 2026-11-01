@@ -61,8 +61,7 @@ function Assert-ReleaseKey {
     }
 }
 function Export-EncryptedReleaseKey {
-    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Password)
-    if ($Password.Length -lt 16) { throw 'Use a unique backup password of at least 16 characters.' }
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][AllowEmptyString()][string]$Password)
     $target = [IO.Path]::GetFullPath($Path)
     $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd('\','/') + [IO.Path]::DirectorySeparatorChar
     if ($target.StartsWith($repo, [StringComparison]::OrdinalIgnoreCase)) { throw 'Keep private-key backups outside the source repository.' }
@@ -90,7 +89,7 @@ function Export-EncryptedReleaseKey {
     } finally { $xml = $restored = $diskXml = $null }
 }
 function Restore-EncryptedReleaseKey {
-    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Password, [switch]$VerifyOnly)
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][AllowEmptyString()][string]$Password, [switch]$VerifyOnly)
     $xml = [LeigodSigningKeyCodec]::Decrypt([IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Path)), $Password)
     try {
         Assert-ReleaseKey $xml

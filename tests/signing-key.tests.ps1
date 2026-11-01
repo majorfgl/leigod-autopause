@@ -27,7 +27,13 @@ try {
     $tampered = [IO.File]::ReadAllBytes($backup); $tampered[0] = $tampered[0] -bxor 1
     Check (Rejected { [LeigodSigningKeyCodec]::Decrypt($tampered, $password) }) 'damaged backup is rejected'
     Check (Rejected { Export-EncryptedReleaseKey -Path $backup -Password $password }) 'existing backup is not overwritten'
-    Check (Rejected { Export-EncryptedReleaseKey -Path (Join-Path $fixtureRoot 'short.p8') -Password 'short' }) 'weak short password is rejected'
+    $passwordCases = @(@{name='one-character';value='a'},@{name='Unicode';value='密'},@{name='empty';value=''},@{name='long';value=('a'*128)})
+    foreach ($case in $passwordCases) {
+        $casePath = Join-Path $fixtureRoot ($case.name+'.p8')
+        $caseResult = Export-EncryptedReleaseKey -Path $casePath -Password $case.value
+        $caseRestore = Restore-EncryptedReleaseKey -Path $casePath -Password $case.value -VerifyOnly
+        Check ($caseResult.verified -and $caseRestore.verified) ($case.name+' password backs up and verifies without a length restriction')
+    }
     Check (Rejected { Export-EncryptedReleaseKey -Path (Join-Path $PSScriptRoot '../private-test.p8') -Password $password }) 'backup inside source repository is rejected'
     $env:LEIGOD_SIGNING_KEY_FILE = Join-Path $fixtureRoot 'new-user.dpapi'
     $verified = Restore-EncryptedReleaseKey -Path $backup -Password $password -VerifyOnly
