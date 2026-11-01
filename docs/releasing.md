@@ -15,6 +15,14 @@
 
 本地正式构建使用原有 DPAPI 私钥。自动发布需要在 GitHub `release` 环境配置 `LEIGOD_SIGNING_KEY_XML`，仅受信任标签上的发布任务可用。不要在 Issue、聊天、命令参数或工作流日志中传递密钥。
 
+配置好 GitHub CLI 登录和 `release` 环境后，可以使用以下命令通过标准输入配置密钥，不需要复制到网页：
+
+```powershell
+pwsh -File scripts/configure-publisher.ps1 -BackupReceipt '已验证备份.p8.json'
+```
+
+该命令先核对备份回执、加密文件摘要与公钥身份，不自动创建或替换发布密钥。
+
 签名发布前必须完成加密备份和恢复验签。备份不能只放在这台电脑，也不能只依赖 GitHub Secrets。参见 [签名与灾难恢复](signing.md)。
 
 当前更新协议固定信任发布公钥，不能在私钥丢失后承诺旧客户端自动迁移到新公钥。
