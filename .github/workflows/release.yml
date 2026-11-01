@@ -47,5 +47,7 @@ jobs:
         run: |
           $result = Get-Content -Raw artifacts/export-result.json | ConvertFrom-Json
           $feed = Join-Path (Split-Path $result.zip) 'stable.json'
-          gh release create $env:GITHUB_REF_NAME $result.zip ($result.zip + '.sha256') $feed --verify-tag --prerelease --title $env:GITHUB_REF_NAME --generate-notes
+          $notes = Join-Path 'docs/releases' ($env:GITHUB_REF_NAME + '.md')
+          if (-not (Test-Path -LiteralPath $notes)) { throw 'Release notes are missing.' }
+          gh release create $env:GITHUB_REF_NAME $result.zip ($result.zip + '.sha256') $feed --verify-tag --prerelease --title $env:GITHUB_REF_NAME --notes-file $notes
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

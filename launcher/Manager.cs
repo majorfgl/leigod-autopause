@@ -114,7 +114,7 @@ namespace LeigodAutoPause {
   }
   static void Launch(string input){string root=Normalize(input);if(MaintenanceEnabled&&!ClientRunning(root)&&LoadState(root)!=null&&LoadState(root).Version==ToolVersion&&!Quarantined(root,Base)){EnsureHome(root);var profile=Profile(root);AtomicWrite(Path.Combine(CacheHome(root),"launch-trial.json"),Encoding.UTF8.GetBytes(Json.Serialize(new LaunchTrial{startedAt=DateTime.UtcNow.ToString("o"),releaseId=Hash(Path.Combine(Base,"release.json")),fingerprint=profile.fingerprint})));}Process.Start(new ProcessStartInfo(Path.Combine(root,"leigod_launcher.exe")){WorkingDirectory=root,WindowStyle=ProcessWindowStyle.Hidden,UseShellExecute=false,CreateNoWindow=true});}
   static void LaunchChecked(string root){
-   try{State state=LoadState(root);if(state!=null&&state.Version!="uninstalled"){if(MaintenanceEnabled)StartGuardian(root,ActiveBundle(root)??Base);if(Quarantined(root,Base))throw new Exception("此适配包未通过启动自检，已停用自动挂载，请等待新版。");ValidateClient(root);Manifest();if(NeedsRepair(root)){if(!Settings(root).autoRepair)throw new Exception("自动修复已关闭，请在管理器中手动修复。");if(ClientRunning(root))throw new Exception("检测到插件需要修复，请退出雷神后重新启动；后台维护也会在退出后处理。");Install(root,false);}}Launch(root);}
+   try{State state=LoadState(root);if(state!=null&&state.Version!="uninstalled"){if(MaintenanceEnabled)StartGuardian(root,ActiveBundle(root)??Base);if(Quarantined(root,Base))throw new Exception("此更新包未通过启动自检，已停用自动挂载，请等待新版。");ValidateClient(root);Manifest();if(NeedsRepair(root)){if(!Settings(root).autoRepair)throw new Exception("自动修复已关闭，请在管理器中手动修复。");if(ClientRunning(root))throw new Exception("检测到插件需要修复，请退出雷神后重新启动；后台维护也会在退出后处理。");Install(root,false);}}Launch(root);}
    catch(Exception e){Launch(root);MessageBox.Show("已尝试启动雷神，但自动暂停未能启用。\r\n\r\n"+e.Message,"自动暂停需要检查",MessageBoxButtons.OK,MessageBoxIcon.Warning);}
   }
   static string Discover(){
@@ -161,7 +161,7 @@ namespace LeigodAutoPause {
    TextBox location;Label status;Button install,launch,remove;
    public ManagerForm(string root){Text="雷神自动暂停 · 管理器 "+ToolVersion;ClientSize=new Size(580,350);FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;StartPosition=FormStartPosition.CenterScreen;BackColor=Color.FromArgb(35,35,38);ForeColor=Color.Gainsboro;Font=new Font("Microsoft YaHei UI",10);
     Controls.Add(new Label{Text="雷神自动暂停",Location=new Point(24,22),AutoSize=true,Font=new Font(Font.FontFamily,15,FontStyle.Bold)});
-    Controls.Add(new Label{Text="共用雷神登录 · 游戏退出等待可调 · 不修改原始 ASAR",Location=new Point(25,63),AutoSize=true,ForeColor=Color.Silver});
+    Controls.Add(new Label{Text="共用雷神登录 · 等待时间可调 · 退出游戏自动暂停",Location=new Point(25,63),AutoSize=true,ForeColor=Color.Silver});
     location=new TextBox{Text=root,Location=new Point(25,104),Size=new Size(437,28)};Controls.Add(location);
     var browse=new Button{Text="选择…",Location=new Point(474,102),Size=new Size(80,31)};browse.Click+=(s,e)=>{using(var d=new OpenFileDialog{Title="选择雷神安装目录中的 leigod.exe",Filter="雷神客户端|leigod.exe"})if(d.ShowDialog()==DialogResult.OK){location.Text=Path.GetDirectoryName(d.FileName);RefreshStatus();}};Controls.Add(browse);
     status=new Label{Location=new Point(25,147),Size=new Size(530,42),ForeColor=Color.FromArgb(224,180,106)};Controls.Add(status);
@@ -169,11 +169,11 @@ namespace LeigodAutoPause {
     install.Click+=(s,e)=>Action(()=>{if(MessageBox.Show("安装需要重启雷神，请先结束游戏及加速。继续安装？","安装自动暂停",MessageBoxButtons.OKCancel,MessageBoxIcon.Information)==DialogResult.OK)Install(location.Text,true);});
     launch.Click+=(s,e)=>Action(()=>LaunchChecked(location.Text));remove.Click+=(s,e)=>Action(()=>{if(MessageBox.Show("将恢复原始模块入口并重启雷神，继续？","卸载自动暂停",MessageBoxButtons.OKCancel)==DialogResult.OK)Uninstall(location.Text,true);});Controls.Add(install);Controls.Add(launch);Controls.Add(remove);
     foreach(var b in new[]{browse,install,launch,remove}){b.FlatStyle=FlatStyle.Flat;b.BackColor=Color.FromArgb(64,64,69);b.ForeColor=Color.White;b.FlatAppearance.BorderColor=Color.FromArgb(85,85,90);}location.BackColor=Color.FromArgb(24,24,26);location.ForeColor=Color.Gainsboro;
-    var maintenance=new Button{Text="自动检测与修复 / 更新源 / 导入适配包",Location=new Point(25,253),Size=new Size(529,34)};maintenance.Click+=(s,e)=>Action(()=>{using(var f=new MaintenanceForm(location.Text))f.ShowDialog(this);});Controls.Add(maintenance);
-    Controls.Add(new Label{Text="按结构与运行功能自检 · 小更新自动重新探测",Location=new Point(25,310),AutoSize=true,ForeColor=Color.Gray,Font=new Font(Font.FontFamily,9)});RefreshStatus();
+    var maintenance=new Button{Text="更新与修复",Location=new Point(25,253),Size=new Size(529,34)};maintenance.Click+=(s,e)=>Action(()=>{using(var f=new MaintenanceForm(location.Text))f.ShowDialog(this);});Controls.Add(maintenance);
+    Controls.Add(new Label{Text="客户端更新后会尝试自动恢复，无法使用时请手动检查计费。",Location=new Point(25,310),AutoSize=true,ForeColor=Color.Gray,Font=new Font(Font.FontFamily,9)});RefreshStatus();
    }
    void Action(Action action){try{UseWaitCursor=true;install.Enabled=launch.Enabled=remove.Enabled=false;action();RefreshStatus();}catch(Exception e){MessageBox.Show(this,e.Message,"操作未完成",MessageBoxButtons.OK,MessageBoxIcon.Warning);}finally{UseWaitCursor=false;install.Enabled=launch.Enabled=remove.Enabled=true;}}
-   void RefreshStatus(){try{string root=Normalize(location.Text);ValidateClient(root);State state=LoadState(root);status.Text=state!=null&&state.Version!="uninstalled"&&Hash(Package(root))==state.MetadataHash?(state.Version==ToolVersion?"已安装。打开雷神后点击搜索框右侧的自动监控按钮设置。":"本机已安装 "+state.Version+"，退出游戏后可升级到 "+ToolVersion+"。"):"客户端结构可识别，安装后执行运行功能自检。";}catch(Exception e){status.Text=e.Message;}}
+   void RefreshStatus(){try{string root=Normalize(location.Text);ValidateClient(root);State state=LoadState(root);status.Text=state!=null&&state.Version!="uninstalled"&&Hash(Package(root))==state.MetadataHash?(state.Version==ToolVersion?"已安装。打开雷神后点击搜索框右侧的自动监控按钮设置。":"本机已安装 "+state.Version+"，退出游戏后可升级到 "+ToolVersion+"。"):"已找到雷神，可以安装。安装后会检查插件是否可用。";}catch(Exception e){status.Text=e.Message;}}
   }
  }
 }

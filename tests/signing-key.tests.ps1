@@ -20,6 +20,13 @@ try {
     $backup = Join-Path $fixtureRoot 'backup.p8'
     $result = Export-EncryptedReleaseKey -Path $backup -Password $password
     Check $result.verified 'encrypted backup is read back and signature verified'
+    $pinnedKeyPath = $env:LEIGOD_SIGNING_KEY_FILE
+    $env:LEIGOD_SIGNING_KEY_FILE = Join-Path $fixtureRoot 'missing-user-key.dpapi'
+    try {
+        $pinned = Export-EncryptedReleaseKey -Path (Join-Path $fixtureRoot 'pinned.p8') -Password $password -KeyPath $pinnedKeyPath
+        Check $pinned.verified 'pinned key path survives a changed lookup environment'
+        Check (Rejected { Read-LocalReleaseKey }) 'missing default key is reported without creating a replacement'
+    } finally { $env:LEIGOD_SIGNING_KEY_FILE = $pinnedKeyPath }
     $decoded = [LeigodSigningKeyCodec]::Decrypt([IO.File]::ReadAllBytes($backup), $password)
     Check ([LeigodSigningKeyCodec]::Prove($decoded, $fixturePublic)) 'decrypted key signs under original identity'
     Check ([LeigodSigningKeyCodec]::Fingerprint($decoded) -eq [LeigodSigningKeyCodec]::Fingerprint($fixturePublic)) 'public fingerprint survives recovery'

@@ -62,7 +62,7 @@ async function perform(closing=false){
 async function tick(){
  if(busy||ending||!win||win.isDestroyed())return;busy=true;
  try{
-  const s=await read();lastSnapshot=s;if(!await probe(s)){monitor.reset();health(false);await js('window.__leigodAutoPauseRender?.('+JSON.stringify({state:'checking',badge:'适配自检中',detail:'正在确认界面和计费接口，未确认前不会自动暂停。',maintenance:maintenance()})+')');return;}const signature=JSON.stringify(s.config);
+  const s=await read();lastSnapshot=s;if(!await probe(s)){monitor.reset();health(false);await js('window.__leigodAutoPauseRender?.('+JSON.stringify({state:'checking',badge:'正在检查',detail:'正在确认界面和计费接口，未确认前不会自动暂停。',maintenance:maintenance()})+')');return;}const signature=JSON.stringify(s.config);
   if(lastConfig&&lastConfig!==signature){const effect=monitor.reconfigure(JSON.parse(lastConfig),s.config);if(effect==='process-reset')cache.clear();if(effect!=='preserved')lastState='';log('settings-changed',{effect});}lastConfig=signature;
   const r=monitor.step(s,performance.now());await render(r,s);health(s.known&&uiReady&&capability.ok);
   if(r.due){await render({state:'pausing'},s);await perform();}

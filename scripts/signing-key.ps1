@@ -42,11 +42,12 @@ public static class LeigodSigningKeyCodec {
 }
 function Get-ReleaseKeyPath {
     if ($env:LEIGOD_SIGNING_KEY_FILE) { return [IO.Path]::GetFullPath($env:LEIGOD_SIGNING_KEY_FILE) }
-    return Join-Path $env:LOCALAPPDATA 'LeigodAutoPausePublisher/signing-key.dpapi'
+    return [IO.Path]::Combine([Environment]::GetFolderPath('LocalApplicationData'), 'LeigodAutoPausePublisher', 'signing-key.dpapi')
 }
 function Read-LocalReleaseKey {
     param([string]$Path = (Get-ReleaseKeyPath))
-    if (-not (Test-Path -LiteralPath $Path)) { throw 'Release key missing. Restore the encrypted backup first.' }
+    $Path = [IO.Path]::GetFullPath($Path)
+    if (-not [IO.File]::Exists($Path)) { throw ('找不到发布密钥：' + $Path + '。请使用保存原密钥的 Windows 账号运行，或从备份恢复。') }
     $clear = [Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes($Path), $null, [Security.Cryptography.DataProtectionScope]::CurrentUser)
     try { return [Text.Encoding]::UTF8.GetString($clear) }
     finally { [Array]::Clear($clear, 0, $clear.Length) }
@@ -61,12 +62,12 @@ function Assert-ReleaseKey {
     }
 }
 function Export-EncryptedReleaseKey {
-    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][AllowEmptyString()][string]$Password)
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][AllowEmptyString()][string]$Password, [string]$KeyPath = (Get-ReleaseKeyPath))
     $target = [IO.Path]::GetFullPath($Path)
     $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd('\','/') + [IO.Path]::DirectorySeparatorChar
     if ($target.StartsWith($repo, [StringComparison]::OrdinalIgnoreCase)) { throw 'Keep private-key backups outside the source repository.' }
     if (Test-Path -LiteralPath $target) { throw 'Backup already exists. Choose a new filename.' }
-    $xml = Read-LocalReleaseKey
+    $xml = Read-LocalReleaseKey -Path $KeyPath
     try {
         Assert-ReleaseKey $xml
         $encrypted = [LeigodSigningKeyCodec]::Encrypt($xml, $Password)

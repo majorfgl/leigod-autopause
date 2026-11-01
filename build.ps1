@@ -20,17 +20,15 @@ try {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'launcher/release-public-key.xml') -Destination $publicXml
     }
     Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'plugin') -Filter '*.cjs' -File | Copy-Item -Destination (Join-Path $stage 'plugin')
-    foreach ($name in @('LICENSE.txt','README.md','使用说明.txt')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $stage }
+    foreach ($name in @('LICENSE.txt','README.md','CONTRIBUTING.md','使用说明.txt')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $stage }
     [IO.Directory]::CreateDirectory((Join-Path $stage 'docs')) | Out-Null
-    Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'docs') -File -Filter '*.md' | Copy-Item -Destination (Join-Path $stage 'docs')
-    $userReadme = [IO.File]::ReadAllText((Join-Path $stage 'README.md')).Replace('(docs/maintainers/README.md)','(source/docs/maintainers/README.md)')
-    [IO.File]::WriteAllText((Join-Path $stage 'README.md'),$userReadme,[Text.UTF8Encoding]::new($false))
+    Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'docs') | Where-Object Name -ne 'maintainers' | Copy-Item -Destination (Join-Path $stage 'docs') -Recurse
     [IO.File]::WriteAllText((Join-Path $stage 'release.config.json'), ($settings | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
     $source = Join-Path $stage 'source'; [IO.Directory]::CreateDirectory($source) | Out-Null
     foreach ($folder in @('plugin','launcher','tests','scripts','docs','.github')) {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot $folder) -Destination (Join-Path $source $folder) -Recurse
     }
-    foreach ($name in @('LICENSE.txt','README.md','使用说明.txt','build.ps1','export.ps1','publisher-key.ps1','publish-feed.ps1','release.config.json','.gitignore')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $source }
+    foreach ($name in @('LICENSE.txt','README.md','CONTRIBUTING.md','使用说明.txt','build.ps1','export.ps1','publisher-key.ps1','publish-feed.ps1','release.config.json','.gitignore')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $source }
     Copy-Item -LiteralPath $publicXml -Destination (Join-Path $source 'launcher/release-public-key.xml') -Force
     $reference = Join-Path $PSScriptRoot 'reference/original-package.json'
     if ((Get-FileHash -LiteralPath $reference).Hash -ne 'A0009496AA724FC7680F50A3AE1B5BA7DE3FC671E3C1B6AE2094581337FBB975') { throw 'Reference metadata mismatch.' }

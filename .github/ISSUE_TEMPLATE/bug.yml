@@ -3,7 +3,7 @@ description: 报告安装、监控、暂停或更新问题
 body:
   - type: markdown
     attributes:
-      value: 请勿上传账号、密码、Token、完整用户配置或未脱敏日志。
+      value: 截图请遮住账号、联系方式和余额。不要上传密码、Token、完整配置或原始日志。
   - type: input
     id: versions
     attributes:
