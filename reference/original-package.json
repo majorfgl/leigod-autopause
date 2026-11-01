@@ -1,0 +1,19 @@
+{
+  "name": "@leigod-rs/win32-node-addon-win32-ia32-msvc",
+  "version": "1.0.4",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "ia32",
+    "x64"
+  ],
+  "main": "win32-node-addon.win32-ia32-msvc.node",
+  "files": [
+    "win32-node-addon.win32-ia32-msvc.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 16"
+  }
+}

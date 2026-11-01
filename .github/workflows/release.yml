@@ -1,0 +1,51 @@
+name: Release candidate
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - shell: pwsh
+        run: |
+          $config = Get-Content -Raw release.config.json | ConvertFrom-Json
+          if ($env:GITHUB_REF_NAME -ne ('v' + $config.version)) { throw 'Tag and source version differ.' }
+          node --test tests/*.test.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/signing-key.tests.ps1
+          ./build.ps1 -Development
+          ./export.ps1
+          ./scripts/test-manager.ps1
+  release:
+    needs: test
+    runs-on: windows-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and sign
+        shell: pwsh
+        env:
+          LEIGOD_SIGNING_KEY_XML: ${{ secrets.LEIGOD_SIGNING_KEY_XML }}
+        run: |
+          if (-not $env:LEIGOD_SIGNING_KEY_XML) { throw 'Release signing secret is not configured.' }
+          ./build.ps1
+          ./export.ps1
+          $result = Get-Content -Raw artifacts/export-result.json | ConvertFrom-Json
+          ./publish-feed.ps1 -Archive $result.zip -Output (Join-Path (Split-Path $result.zip) 'stable.json')
+      - name: Create prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $result = Get-Content -Raw artifacts/export-result.json | ConvertFrom-Json
+          $feed = Join-Path (Split-Path $result.zip) 'stable.json'
+          gh release create $env:GITHUB_REF_NAME $result.zip ($result.zip + '.sha256') $feed --verify-tag --prerelease --title $env:GITHUB_REF_NAME --generate-notes
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

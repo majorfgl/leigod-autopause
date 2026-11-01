@@ -1,0 +1,23 @@
+name: 故障反馈
+description: 报告安装、监控、暂停或更新问题
+body:
+  - type: markdown
+    attributes:
+      value: 请勿上传账号、密码、Token、完整用户配置或未脱敏日志。
+  - type: input
+    id: versions
+    attributes:
+      label: 工具、雷神与 Windows 版本
+    validations:
+      required: true
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 实际现象及复现步骤
+      description: 说明游戏、所选等待时间、界面状态，以及账号是否仍在计费。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果与已经尝试的操作

@@ -1,0 +1,30 @@
+name: Test
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Script tests
+        shell: pwsh
+        run: node --test tests/*.test.cjs
+      - name: Key backup and recovery tests
+        shell: pwsh
+        run: ./tests/signing-key.tests.ps1
+      - name: Development build
+        shell: pwsh
+        run: ./build.ps1 -Development
+      - name: Package audit
+        shell: pwsh
+        run: ./export.ps1
+      - name: Manager tests
+        shell: pwsh
+        run: ./scripts/test-manager.ps1
