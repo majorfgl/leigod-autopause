@@ -27,7 +27,7 @@ async function gameInfo(id){
  const item=api?.find(x=>typeof x.game_process==='string'&&x.game_process.trim())||dbInfo;
  return {processes:typeof item?.game_process==='string'?item.game_process:'',name:String(dbInfo?.game_name||item?.game_name||''),free:String(dbInfo?.is_free??item?.is_free)==='1'};
 }
-function mount(defaults,times){
+function mount(defaults,times,version=''){
  const id='leigod-autopause-host';if(document.getElementById(id))return {existing:true};
  document.getElementById('pubg-autopause-host')?.remove();
  let config={...defaults,processMap:{}};
@@ -43,6 +43,7 @@ function mount(defaults,times){
  const dialogShadow=portal.attachShadow({mode:'open'});dialogShadow.appendChild(shadow.querySelector('style').cloneNode(true));
  const overlay=shadow.getElementById('overlay');overlay.style.pointerEvents='auto';dialogShadow.appendChild(overlay);document.body.appendChild(portal);
  const el=n=>shadow.getElementById(n)||dialogShadow.getElementById(n);let current={gameId:0,gameName:'',state:'idle'};
+ const versionLabel=document.createElement('span');versionLabel.id='plugin-version';versionLabel.textContent=version?'v'+String(version):'版本未知';versionLabel.title='当前加载的插件版本';versionLabel.style.cssText='margin-left:8px;font-size:12px;font-weight:400;color:#aaa;white-space:nowrap';dialogShadow.querySelector('h2').append(' ',versionLabel);
  const label=ms=>ms===0?'立即':ms<60000?ms/1000+' 秒':ms/60000+' 分钟';
  function choices(target,key){el(target).replaceChildren();for(const ms of times){const b=document.createElement('button');b.className='choice'+(config[key]===ms?' active':'');b.textContent=label(ms);b.onclick=()=>{config[key]=ms;persist();choices(target,key);};el(target).appendChild(b);}}
  for(const key of ['enabled','startupEnabled','closePause','shutdownPause','notifications']){el(key).checked=!!config[key];el(key).onchange=()=>{config[key]=el(key).checked;persist();};}
